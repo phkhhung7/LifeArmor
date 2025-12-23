@@ -1,9 +1,7 @@
-
 import { Request, Response } from "express";
 import MedicalRecord from "../models/medicalRecord";
 import { generateMedicalPDF } from "../services/pdf.service";
 import { calculateHash } from "../services/hash.service";
-import { uploadHashToBlockchain } from "../services/blockchain.service";
 import fs from "fs";
 import pinataSDK from "@pinata/sdk";
 import { getGridFSBucket } from "../config/db";
@@ -11,16 +9,16 @@ import { getGridFSBucket } from "../config/db";
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT! });
 
 export const uploadPDFToIPFS = async (pdfPath: string) => {
-  const fileStream = fs.createReadStream(pdfPath);
+const fileStream = fs.createReadStream(pdfPath);
 
-  const options = {
-    pinataMetadata: {
-      name: "medical-record.pdf",
-    },
-  };
+const options = {
+pinataMetadata: {
+name: "medical-record.pdf",
+},
+};
 
-  const result = await pinata.pinFileToIPFS(fileStream, options);
-  console.log("Uploaded to IPFS:", result);
+const result = await pinata.pinFileToIPFS(fileStream, options);
+console.log("Uploaded to IPFS:", result);
   return result.IpfsHash;
 };
 
@@ -38,7 +36,6 @@ export const addMedicalRecord = async (req: Request, res: Response) => {
       symptoms,
       diagnosis,
       treatment,
-    
     } = req.body ?? {};
 
     console.log("Dữ liệu nhận từ frontend:", req.body);
@@ -88,7 +85,7 @@ export const addMedicalRecord = async (req: Request, res: Response) => {
       symptoms,
       diagnosis,
       treatment,
-      attachments: attachmentsId, 
+      attachments: attachmentsId,
     });
 
     // ------------------------------
@@ -103,19 +100,9 @@ export const addMedicalRecord = async (req: Request, res: Response) => {
     const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
 
     // ------------------------------
-    // 5. HASH + BLOCKCHAIN
+    // 5. HASH PDF
     // ------------------------------
     const pdfHash = await calculateHash(pdfPath);
-    const { txHash, network, blockNumber } = await uploadHashToBlockchain(
-      record._id.toString(),
-      patientName,
-      pdfHash
-    );
-console.log("🔥 Blockchain result:", {
-  txHash,
-  network,
-  blockNumber,
-});
 
     // ------------------------------
     // 6. UPDATE RECORD
@@ -124,9 +111,6 @@ console.log("🔥 Blockchain result:", {
     record.pdfHash = pdfHash;
     record.ipfsHash = ipfsHash;
 
-    record.blockchainTx = txHash;
-    record.blockchainNetwork = network;
-    record.blockNumber = blockNumber;
     await record.save();
 
     try { fs.unlinkSync(pdfPath); } catch {}
@@ -144,10 +128,11 @@ console.log("🔥 Blockchain result:", {
     });
   }
 };
+
 export const listMedicalRecords = async (req: Request, res: Response) => {
   try {
     const records = await MedicalRecord.find()
-      .sort({ createdAt: -1 }) 
+      .sort({ createdAt: -1 })
       .limit(100);
 
     res.json({ records });
@@ -156,6 +141,7 @@ export const listMedicalRecords = async (req: Request, res: Response) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 };
+
 export const getMedicalRecordDetail = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -166,15 +152,12 @@ export const getMedicalRecordDetail = async (req: Request, res: Response) => {
        res.status(404).json({
         message: "Không tìm thấy bệnh án",
       });
+      return;
     }
 
-    res.json({
-      record,
-    });
+    res.json({ record });
   } catch (err: any) {
     console.error("Error fetching medical record detail:", err);
-    res.status(500).json({
-      error: err.message || "Internal server error",
-    });
+    res.status(500).json({ error: err.message || "Internal server error" });
   }
 };

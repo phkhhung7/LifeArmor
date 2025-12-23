@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_datlichkham/screens/screen_authencication/login_screen.dart';
 import 'package:flutter_application_datlichkham/screens/screens_admin/report_statistics.dart';
 import 'patient_list.dart';
 import 'security_screens/security_ayth.dart';
@@ -99,9 +100,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 title: Text('Bảo mật và Phân quyền'),
                 onTap: () => onSelectMenu(8)),
             ListTile(
-                leading: Icon(Icons.logout),
-                title: Text('Đăng xuất'),
-                onTap: () {}),
+              leading: Icon(Icons.logout),
+              title: Text('Đăng xuất'),
+              onTap: () async {
+                // 1️⃣ Xóa session / token ở đây nếu có
+                // Ví dụ nếu dùng SharedPreferences:
+                // final prefs = await SharedPreferences.getInstance();
+                // await prefs.clear();
+
+                // 2️⃣ Nếu dùng Firebase Auth:
+                // await FirebaseAuth.instance.signOut();
+
+                // 3️⃣ Điều hướng về màn hình login và xóa tất cả màn hình cũ
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                      (route) => false,
+                );
+              },
+            ),
+
           ],
         ),
       ),
