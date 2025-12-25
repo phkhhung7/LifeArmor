@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from joblib import dump
-from app.config.dataset import patient_collection
+from ai_chat import patient_collection
 
 train_knn_bp = Blueprint('train_knn', __name__)
 

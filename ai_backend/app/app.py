@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from app.api.predict import predict_bp
-from app.models.train_knn import train_knn_bp
+from ai_chat import predict_bp
+from ai_chat import train_knn_bp
 
 app = Flask(__name__)
 CORS(app)

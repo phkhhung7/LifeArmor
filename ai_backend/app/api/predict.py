@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models.predict_knn import predict_knn
+from ai_chat import predict_knn
 import os
 
 predict_bp = Blueprint('predict', __name__)
@@ -7,7 +7,7 @@ predict_bp = Blueprint('predict', __name__)
 @predict_bp.route('/predict', methods=['POST'])
 def predict_api():
     try:
-        from app.config.dataset import patient_collection  # nếu bạn dùng MongoDB để log lạ
+        from ai_chat import patient_collection  # nếu bạn dùng MongoDB để log lạ
 
         # Kiểm tra model & scaler
         model_path = "app/models/knn_model.pkl"

@@ -8,56 +8,63 @@ class AIChatScreen extends StatefulWidget {
 }
 
 class _AIChatScreenState extends State<AIChatScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _instructionController = TextEditingController();
+  final TextEditingController _contextController = TextEditingController();
+
   final List<Map<String, String>> messages = [];
 
-  // Hàm gọi backend GPT
-  Future<String> sendToGPT(String userMessage) async {
-    // Thay URL nếu chạy trên device thật hoặc server
-    final url = Uri.parse('http://10.0.2.2:5000/chat');
+  // Gửi dữ liệu tới backend Flask
+  Future<String> sendToAI(String category, String instruction, String context) async {
+    final url = Uri.parse('http://10.0.2.2:5000/predict/'); // Chạy trên emulator
 
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"text": userMessage}),
+      body: jsonEncode({
+        "category": category,
+        "instruction": instruction,
+        "context": context,
+      }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      // Trả về text của GPT
-      return data['choices'][0]['message']['content'];
+      return data['response']; // Backend trả về {"response": "..."}
     } else {
-      throw Exception('Backend GPT error: ${response.body}');
+      throw Exception('Backend error: ${response.body}');
     }
   }
 
-  // Hàm gửi tin nhắn
+  // Gửi tin nhắn
   void _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    final category = _categoryController.text.trim();
+    final instruction = _instructionController.text.trim();
+    final context = _contextController.text.trim();
+
+    if (instruction.isEmpty) return;
 
     setState(() {
-      messages.add({'role': 'user', 'message': text});
+      messages.add({'role': 'user', 'message': instruction});
     });
 
-    _controller.clear();
+    _instructionController.clear();
 
     try {
-      // Hiển thị "GPT đang trả lời..."
       setState(() {
-        messages.add({'role': 'ai', 'message': 'GPT đang trả lời...'});
+        messages.add({'role': 'ai', 'message': 'AI đang trả lời...'});
       });
 
-      final reply = await sendToGPT(text);
+      final reply = await sendToAI(category.isEmpty ? "Chung" : category, instruction, context);
 
       setState(() {
-        messages.removeLast(); // xóa "đang trả lời"
+        messages.removeLast();
         messages.add({'role': 'ai', 'message': reply});
       });
     } catch (e) {
       setState(() {
         messages.removeLast();
-        messages.add({'role': 'ai', 'message': '❌ Lỗi kết nối GPT'});
+        messages.add({'role': 'ai', 'message': '❌ Lỗi kết nối AI'});
       });
     }
   }
@@ -105,9 +112,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _controller,
+                    controller: _instructionController,
                     decoration: InputDecoration(
-                      hintText: 'Nhập tin nhắn...',
+                      hintText: 'Nhập instruction (tin nhắn)...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
