@@ -6,12 +6,13 @@ import mongoose from 'mongoose';
 // Thêm phòng ban
 export const addDepartments = async (req: Request, res: Response) => {
   try {
-    const { departmentName, description } = req.body;
+    const { departmentName, description, topic } = req.body;
     console.log("Dữ liệu nhận từ frontend:", req.body);
 
     const newDepartment = new Departments({
       departmentName,
       description,
+      topic,
     });
 
     await newDepartment.save();
@@ -38,7 +39,7 @@ export const getDepartments = async (req: Request, res: Response) => {
 export const updateDepartment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { departmentName, description } = req.body;
+    const { departmentName, description, topic } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
        res.status(400).json({ message: 'ID không hợp lệ' });
@@ -47,7 +48,7 @@ export const updateDepartment = async (req: Request, res: Response) => {
 
     const updated = await Departments.findByIdAndUpdate(
       id,
-      { departmentName, description },
+      { departmentName, description, topic },
       { new: true }
     );
 

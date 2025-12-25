@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import './patient_detail.dart';
+import './patient_detail.dart'; // bạn có thể đổi tên file này nếu muốn: user_detail.dart
 
 class PatientListScreen extends StatelessWidget {
-  final List<Map<String, String>> patients = [
+  final List<Map<String, String>> users = [
     {
       'name': 'Nguyễn Văn A',
       'dob': '12/05/1985',
       'gender': 'Nam',
       'phone': '0901234567',
+      'role': 'Người dùng',
       'address': '123 Lê Lợi, Q1, TP.HCM'
     },
     {
@@ -15,6 +16,7 @@ class PatientListScreen extends StatelessWidget {
       'dob': '25/11/1990',
       'gender': 'Nữ',
       'phone': '0912345678',
+      'role': 'Người hướng dẫn',
       'address': '456 Hai Bà Trưng, Q3, TP.HCM'
     },
   ];
@@ -22,26 +24,45 @@ class PatientListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Danh sách bệnh nhân')),
-      
+      appBar: AppBar(
+        title: Text('Danh sách người dùng'),
+        backgroundColor: Colors.teal,
+        elevation: 3,
+      ),
       body: ListView.builder(
-        itemCount: patients.length,
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        itemCount: users.length,
         itemBuilder: (context, index) {
-          final patient = patients[index];
+          final user = users[index];
           return Card(
-            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            elevation: 2,
+            margin: EdgeInsets.symmetric(vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: CircleAvatar(
-                child: Icon(Icons.person),
+                radius: 24,
+                backgroundColor: Colors.teal[100],
+                child: Icon(Icons.person, color: Colors.teal[800]),
               ),
-              title: Text(patient['name'] ?? ''),
-              subtitle: Text("SĐT: ${patient['phone']}"),
-              trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              title: Text(
+                user['name'] ?? '',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 4),
+                  Text("SĐT: ${user['phone']}"),
+                  Text("Vai trò: ${user['role'] ?? 'Người dùng'}"),
+                ],
+              ),
+              trailing: Icon(Icons.arrow_forward_ios, size: 18, color: Colors.teal[300]),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PatientDetailScreen(patient: patient),
+                    builder: (_) => PatientDetailScreen(patient: user),
                   ),
                 );
               },

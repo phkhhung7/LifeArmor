@@ -5,10 +5,7 @@ import '../../services/api_medicalRecordBlockchain.dart';
 class MedicalRecordDetailPage extends StatefulWidget {
   final String recordId;
 
-  const MedicalRecordDetailPage({
-    super.key,
-    required this.recordId,
-  });
+  const MedicalRecordDetailPage({super.key, required this.recordId});
 
   @override
   State<MedicalRecordDetailPage> createState() =>
@@ -27,11 +24,9 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
 
   Future<void> _loadDetail() async {
     try {
-      final data =
-          await MedicalRecordBlockchainService.getMedicalRecordDetail(
+      final data = await MedicalRecordBlockchainService.getMedicalRecordDetail(
         widget.recordId,
       );
-
       setState(() {
         record = data;
         loading = false;
@@ -57,93 +52,120 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chi tiết hồ sơ bệnh án')),
+      appBar: AppBar(
+        title: const Text('Chi tiết hồ sơ tình huống'),
+        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBlockchainSection(record!),
-            const SizedBox(height: 24),
-            _buildActions(record!),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================
-  // 🛡️ BLOCKCHAIN SECTION
-  // =========================
-  Widget _buildBlockchainSection(Map<String, dynamic> r) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '🛡️ XÁC MINH BLOCKCHAIN',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-
-            _infoRow('PDF Hash', r['pdfHash']?.toString()),
-            _infoRow('IPFS Hash', r['ipfsHash']?.toString()),
-            _infoRow('TX Hash', r['blockchainTx']?.toString()),
-            _infoRow('Block', r['blockNumber']?.toString()),
-            _infoRow(
-              'Network',
-              r['blockchainNetwork']?.toString() ?? 'Sepolia',
-            ),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton.icon(
-              icon: const Icon(Icons.verified),
-              label: const Text('XÁC MINH BLOCKCHAIN'),
-              onPressed: r['blockchainTx'] == null
-                  ? null
-                  : () => _openEtherscan(r),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================
-  // ⚙️ ACTION BUTTONS
-  // =========================
-  Widget _buildActions(Map<String, dynamic> r) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('Tải PDF'),
-            onPressed: r['pdfUrl'] == null
-                ? null
-                : () => _openPdf(r['pdfUrl']),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.refresh),
-            label: const Text('Tạo phiên bản mới'),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chức năng tạo phiên bản mới (TODO)'),
+            // Thông tin cơ bản về tình huống
+            Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '👤 Thông tin người dùng',
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const Divider(),
+                    _infoRow('Tên', record!['patientName'] ?? '-'),
+                    _infoRow('ID', record!['patientId'] ?? '-'),
+                    _infoRow('Ngày xử lý', record!['visitDate'] ?? '-'),
+                    _infoRow('Tạo lúc', record!['createdAt'] ?? '-'),
+                    _infoRow('Mô tả tình huống', record!['reason'] ?? '-'),
+                    _infoRow('Người tư vấn', record!['doctorName'] ?? '-'),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Blockchain section
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '🛡️ XÁC MINH BLOCKCHAIN',
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const Divider(),
+                    _infoRow('PDF Hash', record!['pdfHash']?.toString()),
+                    _infoRow('IPFS Hash', record!['ipfsHash']?.toString()),
+                    _infoRow('TX Hash', record!['blockchainTx']?.toString()),
+                    _infoRow('Block', record!['blockNumber']?.toString()),
+                    _infoRow('Network',
+                        record!['blockchainNetwork']?.toString() ?? 'Sepolia'),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.verified),
+                      label: const Text('XÁC MINH BLOCKCHAIN'),
+                      onPressed: record!['blockchainTx'] == null
+                          ? null
+                          : () => _openEtherscan(record!),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('Tải PDF'),
+                    onPressed: record!['pdfUrl'] == null
+                        ? null
+                        : () => _openPdf(record!['pdfUrl']),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Tạo phiên bản mới'),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Chức năng tạo phiên bản mới (TODO)'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

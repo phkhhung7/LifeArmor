@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-
 import '../../services/api_medicalRecordBlockchain.dart';
 
 class MedicalRecordForm extends StatefulWidget {
@@ -14,7 +13,6 @@ class MedicalRecordForm extends StatefulWidget {
 
 class _MedicalRecordFormState extends State<MedicalRecordForm> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController patientIdController = TextEditingController();
   final TextEditingController doctorIdController = TextEditingController();
   final TextEditingController patientNameController = TextEditingController();
@@ -23,8 +21,6 @@ class _MedicalRecordFormState extends State<MedicalRecordForm> {
   final TextEditingController treatmentController = TextEditingController();
 
   DateTime? visitDate;
-
-  // Dùng XFile để hỗ trợ cả web và mobile
   final List<XFile> attachments = [];
   final ImagePicker picker = ImagePicker();
 
@@ -41,178 +37,155 @@ class _MedicalRecordFormState extends State<MedicalRecordForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tạo Hồ Sơ Bệnh Án"),
+        title: const Text("Tạo Hồ Sơ Tình Huống"),
+        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Patient ID
-              TextFormField(
-                controller: patientIdController,
-                decoration: const InputDecoration(
-                  labelText: "Patient ID",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value!.isEmpty ? "Nhập Patient ID" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Doctor ID
-              TextFormField(
-                controller: doctorIdController,
-                decoration: const InputDecoration(
-                  labelText: "Doctor ID",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value!.isEmpty ? "Nhập Doctor ID" : null,
-              ),
-              const SizedBox(height: 14),
-              
-               TextFormField(
-                controller: patientNameController,
-                decoration: const InputDecoration(
-                  labelText: "Patient Name",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value!.isEmpty ? "Nhập PatientName" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Visit Date
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Card(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Ngày khám: ${visitDate != null ? visitDate.toString().substring(0, 10) : 'Chưa chọn'}",
-                    style: const TextStyle(fontSize: 16),
+                  _buildTextField(patientIdController, "Patient ID"),
+                  const SizedBox(height: 12),
+                  _buildTextField(doctorIdController, "Doctor ID"),
+                  const SizedBox(height: 12),
+                  _buildTextField(patientNameController, "Patient Name"),
+                  const SizedBox(height: 12),
+
+                  // Ngày khám
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Ngày khám: ${visitDate != null ? visitDate.toString().substring(0, 10) : 'Chưa chọn'}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                            initialDate: DateTime.now(),
+                          );
+                          if (date != null) {
+                            setState(() => visitDate = date);
+                          }
+                        },
+                        child: const Text("Chọn ngày"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
+
+                  _buildTextField(symptomsController, "Triệu chứng", maxLines: 3),
+                  const SizedBox(height: 12),
+                  _buildTextField(diagnosisController, "Chẩn đoán", maxLines: 3),
+                  const SizedBox(height: 12),
+                  _buildTextField(treatmentController, "Điều trị", maxLines: 3),
+                  const SizedBox(height: 16),
+
+                  // Upload attachments
+                  const Text("Tệp đính kèm (ảnh/X-ray):"),
+                  const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        initialDate: DateTime.now(),
-                      );
-                      if (date != null) {
-                        setState(() => visitDate = date);
-                      }
-                    },
-                    child: const Text("Chọn ngày"),
+                    onPressed: pickAttachments,
+                    child: const Text("Chọn tệp"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...attachments.map((x) => Text("• ${p.basename(x.path)}")),
+
+                  const SizedBox(height: 20),
+
+                  // Submit button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      child: const Text("Tạo Hồ Sơ"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Symptoms
-              TextFormField(
-                controller: symptomsController,
-                decoration: const InputDecoration(
-                  labelText: "Triệu chứng",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) => value!.isEmpty ? "Nhập triệu chứng" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Diagnosis
-              TextFormField(
-                controller: diagnosisController,
-                decoration: const InputDecoration(
-                  labelText: "Chẩn đoán",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) => value!.isEmpty ? "Nhập chẩn đoán" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Treatment
-              TextFormField(
-                controller: treatmentController,
-                decoration: const InputDecoration(
-                  labelText: "Điều trị",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) =>
-                    value!.isEmpty ? "Nhập phương pháp điều trị" : null,
-              ),
-              const SizedBox(height: 20),
-
-              // Upload attachments
-              const Text("Tệp đính kèm (ảnh/X-ray):"),
-              const SizedBox(height: 8),
-
-              ElevatedButton(
-                onPressed: pickAttachments,
-                child: const Text("Chọn tệp"),
-              ),
-              const SizedBox(height: 10),
-
-              // Show selected files
-              ...attachments.map(
-                (x) => Text("• ${p.basename(x.path)}"),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate() &&
-                        visitDate != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Đang gửi dữ liệu...")),
-                      );
-                      try {
-                        await MedicalRecordBlockchainService.addMedicalRecord(
-                          patientId: patientIdController.text.trim(),
-                          doctorId: doctorIdController.text.trim(),
-                          patientName: patientNameController.text.trim(),
-                          symptoms: symptomsController.text.trim(),
-                          diagnosis: diagnosisController.text.trim(),
-                          treatment: treatmentController.text.trim(),
-                          visitDate: visitDate!,
-                          attachments: attachments, 
-                         
-                        );
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Tạo hồ sơ thành công!")),
-                        );
-                        _formKey.currentState!.reset();
-                        setState(() {
-                          visitDate = null;
-                          attachments.clear();
-                        });
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Lỗi: $e")),
-                        );
-                      }
-                    } else if (visitDate == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Vui lòng chọn ngày khám")),
-                      );
-                    }
-                  },
-                  child: const Text("Tạo Hồ Sơ"),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-}  
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      maxLines: maxLines,
+      validator: (value) =>
+      value == null || value.isEmpty ? "Vui lòng nhập $label" : null,
+    );
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate() && visitDate != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đang gửi dữ liệu...")),
+      );
+      try {
+        await MedicalRecordBlockchainService.addMedicalRecord(
+          patientId: patientIdController.text.trim(),
+          doctorId: doctorIdController.text.trim(),
+          patientName: patientNameController.text.trim(),
+          symptoms: symptomsController.text.trim(),
+          diagnosis: diagnosisController.text.trim(),
+          treatment: treatmentController.text.trim(),
+          visitDate: visitDate!,
+          attachments: attachments,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Tạo hồ sơ thành công!")),
+        );
+        _formKey.currentState!.reset();
+        setState(() {
+          visitDate = null;
+          attachments.clear();
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi: $e")),
+        );
+      }
+    } else if (visitDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng chọn ngày khám")),
+      );
+    }
+  }
+}

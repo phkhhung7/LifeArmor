@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_appointment.dart';
 import 'update_medical.dart';
-import 'chatAI_screen.dart';
 
 class AppointmentPage extends StatefulWidget {
   @override
@@ -20,102 +19,112 @@ class _AppointmentPageState extends State<AppointmentPage> {
   Future<void> loadAppointments() async {
     try {
       final data = await AddAppointments.getAppoitment();
-      print('Dữ liệu từ API: $data'); // Debug dữ liệu từ API
       setState(() {
         appointments = data != null
             ? data.where((appt) => appt['id'] != null).toList()
             : [];
       });
     } catch (e) {
-      print('Lỗi khi tải lịch hẹn: $e'); // Log lỗi chi tiết
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi khi tải lịch hẹn: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Lỗi khi tải tình huống: $e'), backgroundColor: Colors.red),
         );
       }
-      setState(() {
-        appointments = []; // Gán danh sách rỗng nếu có lỗi
-      });
+      setState(() => appointments = []);
     }
   }
+
+  int get totalCases => appointments.length;
+  int get pendingCases => appointments.where((a) => a['status'] == 'Đang chờ tư vấn').length;
+  int get completedCases => appointments.where((a) => a['status'] == 'Đã tư vấn').length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lịch Hẹn Khám'),
-        centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Danh sách tình huống'),
+        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: appointments.isEmpty
-            ? const Center(
-                child: Text(
-                  'Không có lịch hẹn',
-                  style: TextStyle(fontSize: 18),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Thống kê trực quan
+            Card(
+              elevation: 4,
+              color: Colors.teal.shade100,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _StatBox('Tổng tình huống', totalCases.toString(), Icons.list_alt),
+                    _StatBox('Đang chờ', pendingCases.toString(), Icons.hourglass_top),
+                    _StatBox('Đã tư vấn', completedCases.toString(), Icons.check_circle),
+                  ],
                 ),
-              )
-            : ListView.builder(
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: appointments.isEmpty
+                  ? const Center(child: Text('Không có tình huống', style: TextStyle(fontSize: 18)))
+                  : ListView.builder(
                 itemCount: appointments.length,
                 itemBuilder: (context, index) {
                   final appt = appointments[index];
                   return _buildAppointmentCard(appt);
                 },
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAppointmentCard(Map<String, dynamic> appt) {
-    final patientName = appt['patientName']?.toString() ?? 'Chưa có tên';
-    final date = appt['date']?.toString() ?? 'Không có';
-    final time = appt['time']?.toString() ?? 'Không có';
-    final status = appt['status']?.toString() ?? 'Chưa xác nhận';
+    final userName = appt['patientName'] ?? 'Chưa có tên';
+    final date = appt['date'] ?? 'Không có';
+    final time = appt['time'] ?? 'Không có';
+    final status = appt['status'] ?? 'Đang chờ tư vấn';
+
+    Color statusColor = status == 'Đã tư vấn'
+        ? Colors.green
+        : status == 'Người dùng hủy'
+        ? Colors.red
+        : Colors.orange;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
-        leading: const Icon(Icons.calendar_today, color: Colors.blueAccent),
-        title: Text(
-          patientName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        leading: const Icon(Icons.chat, color: Colors.teal),
+        title: Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Day: $date'),
-            Text('Hour: $time'),
-            Text('Status: $status'),
+            Text('Ngày: $date'),
+            Text('Giờ: $time'),
+            Text('Trạng thái: $status', style: TextStyle(color: statusColor)),
           ],
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () async {
-          if (appt['id'] == null) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('ID lịch hẹn không hợp lệ'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-            return;
-          }
+          if (appt['id'] == null) return;
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AppointmentDetailPage(appointment: appt),
+              builder: (_) => AppointmentDetailPage(appointment: appt),
             ),
           );
-          if (result == true) {
-            loadAppointments(); // Làm mới danh sách sau khi cập nhật
-          }
+          if (result == true) loadAppointments();
         },
       ),
     );
@@ -125,120 +134,67 @@ class _AppointmentPageState extends State<AppointmentPage> {
 class AppointmentDetailPage extends StatelessWidget {
   final Map<String, dynamic> appointment;
 
-  const AppointmentDetailPage({Key? key, required this.appointment})
-      : super(key: key);
+  const AppointmentDetailPage({Key? key, required this.appointment}) : super(key: key);
 
-  Future<void> updateStatus(
-      BuildContext context, String id, String newStatus) async {
-    if (id == null || id.isEmpty) {
-      showSnackbar(context, 'Không tìm thấy ID lịch hẹn', isError: true);
-      return;
-    }
-
+  Future<void> updateStatus(BuildContext context, String id, String newStatus) async {
     try {
       await AddAppointments.updateStatus(id, newStatus);
       if (!context.mounted) return;
-      showSnackbar(context, 'Đã cập nhật trạng thái thành "$newStatus"');
-      Navigator.pop(context, true); // Trả về true để làm mới danh sách
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đã cập nhật trạng thái: $newStatus'), backgroundColor: Colors.green),
+      );
+      Navigator.pop(context, true);
     } catch (e) {
       if (context.mounted) {
-        showSnackbar(context, 'Lỗi khi cập nhật trạng thái: $e', isError: true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi cập nhật: $e'), backgroundColor: Colors.red),
+        );
       }
-      print('Lỗi khi cập nhật trạng thái: $e');
     }
   }
 
-  void showSnackbar(BuildContext context, String message,
-      {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-      ),
-    );
-  }
-
-  void _showStatusSelectionMenu(BuildContext context, String appointmentId) {
-    if (appointmentId.isEmpty) {
-      showSnackbar(context, 'ID lịch hẹn không hợp lệ', isError: true);
-      return;
-    }
-
+  void _showStatusMenu(BuildContext context, String appointmentId) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (BuildContext sheetContext) {
+      builder: (sheetContext) {
         return SafeArea(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Cập nhật trạng thái',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const Divider(),
-                _buildStatusOption(
-                    sheetContext, appointmentId, context, 'Đã khám'),
-                _buildStatusOption(
-                    sheetContext, appointmentId, context, 'khách hủy'),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Cập nhật trạng thái', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.hourglass_top, color: Colors.orange),
+                title: const Text('Đang chờ tư vấn'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  updateStatus(context, appointmentId, 'Đang chờ tư vấn');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_circle, color: Colors.green),
+                title: const Text('Đã tư vấn'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  updateStatus(context, appointmentId, 'Đã tư vấn');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel, color: Colors.red),
+                title: const Text('Người dùng hủy'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  updateStatus(context, appointmentId, 'Người dùng hủy');
+                },
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatusOption(BuildContext sheetContext, String appointmentId,
-      BuildContext parentContext, String status) {
-    return ListTile(
-      leading: Icon(
-        status == 'Đã xác nhận' ? Icons.check_circle : Icons.cancel,
-        color: status == 'Đã xác nhận' ? Colors.green : Colors.red,
-      ),
-      title: Text(
-        status,
-        style: const TextStyle(fontSize: 16),
-      ),
-      onTap: () {
-        Navigator.pop(sheetContext); // Đóng bottom sheet
-        _confirmChangeStatus(parentContext, appointmentId, status);
-      },
-    );
-  }
-
-  void _confirmChangeStatus(
-      BuildContext context, String appointmentId, String newStatus) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Xác nhận thay đổi trạng thái'),
-          content: Text('Bạn có chắc muốn đổi trạng thái thành "$newStatus"?'),
-          actions: [
-            TextButton(
-              child: const Text('Hủy'),
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-            ),
-            TextButton(
-              child: const Text('Xác nhận'),
-              onPressed: () async {
-                Navigator.pop(dialogContext); // Đóng dialog
-                await updateStatus(context, appointmentId, newStatus);
-              },
-            ),
-          ],
         );
       },
     );
@@ -246,97 +202,43 @@ class AppointmentDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('Dữ liệu appointment: $appointment');
-
+    final appt = appointment;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chi tiết lịch hẹn'),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Chi tiết tình huống'),
+        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _detailRow('Tên bệnh nhân',
-                    appointment['patientName']?.toString() ?? 'Không có'),
-                _detailRow(
-                    'email', appointment['email']?.toString() ?? 'Không có'),
-                _detailRow(
-                    'Ngày', appointment['date']?.toString() ?? 'Không có'),
-                _detailRow(
-                    'Giờ', appointment['time']?.toString() ?? 'Không có'),
-                _detailRow('Khoa',
-                    appointment['departmentName']?.toString() ?? 'Không có'),
-                _detailRow(
-                    'Lý do', appointment['reason']?.toString() ?? 'Không có'),
-                _detailRow('Trạng thái',
-                    appointment['status']?.toString() ?? 'Chưa xác nhận'),
-                _detailRow('Mã bác sĩ',
-                    appointment['doctorName']?.toString() ?? 'Không có'),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        final appointmentId =
-                            appointment['id']?.toString() ?? '';
-                        print(
-                            'appointmentId trước khi gọi _showStatusSelectionMenu: $appointmentId');
-                        _showStatusSelectionMenu(context, appointmentId);
-                      },
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Cập nhật trạng thái'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                      ),
-                    ),
-                  ],
-                ),
+                _detailRow('Người tư vấn', appt['patientName']),
+                _detailRow('Email', appt['email']),
+                _detailRow('Ngày', appt['date']),
+                _detailRow('Giờ', appt['time']),
+                _detailRow('Khoa', appt['departmentName']),
+                _detailRow('Lý do', appt['reason']),
+                _detailRow('Trạng thái', appt['status']),
+                _detailRow('Mã tiến sĩ', appt['doctorName']),
                 const SizedBox(height: 20),
                 Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          final appointmentId =
-                              appointment['id']?.toString() ?? '';
-                          print('appointmentId: $appointmentId');
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AddPatientForm(appointment: appointment),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.person_add),
-                        label: const Text('Thêm thông tin bệnh án'),
-                      ),
-                      const SizedBox(height: 16), // khoảng cách giữa 2 nút
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DiagnosisFormScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.analytics),
-                        label: const Text('Dự đoán'),
-                      ),
-                    ],
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showStatusMenu(context, appt['id'].toString()),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Cập nhật trạng thái'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -348,10 +250,27 @@ class AppointmentDetailPage extends StatelessWidget {
   Widget _detailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(
-        '$label: ${value ?? "Không có"}',
-        style: const TextStyle(fontSize: 16),
-      ),
+      child: Text('$label: ${value ?? "Không có"}', style: const TextStyle(fontSize: 16)),
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String label;
+  final String count;
+  final IconData icon;
+
+  const _StatBox(this.label, this.count, this.icon);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 28, color: Colors.teal),
+        const SizedBox(height: 8),
+        Text(count, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.grey)),
+      ],
     );
   }
 }

@@ -9,10 +9,10 @@ class MonthlyReportScreen extends StatefulWidget {
 }
 
 class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
-  int get totalPatients => appointments.map((e) => e['_id'] ?? e['patientName']).toSet().length;
+  int get totalUsers => appointments.map((e) => e['_id'] ?? e['patientName']).toSet().length;
   final int totalAppointments = 95;
-  final double totalRevenue = 35600000;
-  final List<int> weeklyPatients = [30, 25, 35, 30]; // Tuần 1 -> 4
+  final double totalInteractions = 35600000; // ví dụ doanh thu → tổng tương tác
+  final List<int> weeklyInteractions = [30, 25, 35, 30]; // Tuần 1 -> 4
 
   List<dynamic> appointments = [];
 
@@ -33,41 +33,43 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     }
   }
 
-  
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Báo cáo & Thống kê tháng'),
+        title: Text('Báo cáo & Thống kê tháng', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.teal,
+        elevation: 4,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
             _buildSummaryCard(
-              title: 'Tổng số bệnh nhân',
-              value: '$totalPatients người',
+              title: 'Tổng số người dùng',
+              value: '$totalUsers người',
               icon: Icons.people,
-              color: Colors.blue,
+              color: Colors.teal,
             ),
             _buildSummaryCard(
-              title: 'Tổng doanh thu',
-              value: _formatCurrency(totalRevenue),
-              icon: Icons.attach_money,
+              title: 'Tổng tương tác',
+              value: _formatNumber(totalInteractions),
+              icon: Icons.chat_bubble,
               color: Colors.green,
             ),
             _buildSummaryCard(
-              title: 'Lịch hẹn đã hoàn thành',
+              title: 'Lịch giao tiếp hoàn thành',
               value: '$totalAppointments ca',
               icon: Icons.calendar_today,
               color: Colors.purple,
             ),
             SizedBox(height: 24),
-            Text(
-              'Số lượng bệnh nhân theo tuần',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Số lượng tương tác theo tuần',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             SizedBox(height: 250, child: _buildBarChart()),
           ],
@@ -88,10 +90,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 3,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withOpacity(0.15),
           child: Icon(icon, color: color),
         ),
-        title: Text(title),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(
           value,
           style: TextStyle(
@@ -104,11 +106,11 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     );
   }
 
-  String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'\B(?=(\d{3})+(?!\d))'),
+  String _formatNumber(double number) {
+    return number.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (match) => '.',
-        )} VNĐ';
+    );
   }
 
   Widget _buildBarChart() {
@@ -133,8 +135,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 final weekNames = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(weekNames[value.toInt()],
-                      style: TextStyle(fontSize: 12)),
+                  child: Text(weekNames[value.toInt()], style: TextStyle(fontSize: 12)),
                 );
               },
               reservedSize: 30,
@@ -142,12 +143,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           ),
         ),
         borderData: FlBorderData(show: false),
-        barGroups: List.generate(weeklyPatients.length, (index) {
+        barGroups: List.generate(weeklyInteractions.length, (index) {
           return BarChartGroupData(
             x: index,
             barRods: [
               BarChartRodData(
-                toY: weeklyPatients[index].toDouble(),
+                toY: weeklyInteractions[index].toDouble(),
                 width: 22,
                 color: Colors.teal,
                 borderRadius: BorderRadius.circular(4),

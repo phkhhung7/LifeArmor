@@ -1,25 +1,28 @@
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'config.dart'; // file chứa baseUrl, ví dụ: const String baseUrl = "http://localhost:3000";
+import 'package:http/http.dart' as http;
+
+import 'config.dart'; // file chứa baseUrl
 import 'package:shared_preferences/shared_preferences.dart';
+
 class DepartmentService {
-  // Thêm phòng ban
-  static Future<String> addDepartment(String name, String description) async {
+  // Thêm tình huống
+  static Future<String> addDepartment(String name, String description, String topic) async {
     try {
       final url = Uri.parse('$baseUrl/auth/api_addDepartment');
       final prefs = await SharedPreferences.getInstance();
-       final token = prefs.getString('token');
-       if (token == null) {
-        return "Chưa đăng nhập. Không có token.";
-      }
+      final token = prefs.getString('token');
+      if (token == null) return "Chưa đăng nhập. Không có token.";
+
       final response = await http.post(
         url,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $token",},
+          "Authorization": "Bearer $token",
+        },
         body: jsonEncode({
           "departmentName": name,
           "description": description,
+          "topic": topic, // thêm topic
         }),
       );
 
@@ -31,24 +34,24 @@ class DepartmentService {
     }
   }
 
-  // Hiển thị danh sách phòng ban
+  // Hiển thị danh sách tình huống
   static Future<List<Map<String, dynamic>>> getDepartments() async {
     try {
       final url = Uri.parse('$baseUrl/auth/api_departmentList');
-
       final prefs = await SharedPreferences.getInstance();
-       final token = prefs.getString('token');
-       if (token == null) {
+      final token = prefs.getString('token');
+      if (token == null) {
         print("Chưa đăng nhập. Không có token.");
         return [];
       }
+
       final response = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token', 
-      },
-    );
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
@@ -56,6 +59,7 @@ class DepartmentService {
           'id': e['_id'],
           'departmentName': e['departmentName'],
           'description': e['description'],
+          'topic': e['topic'], // thêm topic
         }).toList();
       } else {
         print("Lỗi khi lấy danh sách: ${response.body}");
@@ -67,24 +71,24 @@ class DepartmentService {
     }
   }
 
-  // Sửa phòng ban
-  static Future<String> updateDepartment(String id, String name, String description) async {
+  // Sửa tình huống
+  static Future<String> updateDepartment(String id, String name, String description, String topic) async {
     try {
       final url = Uri.parse('$baseUrl/auth/api_updatDepartment/$id');
-       final prefs = await SharedPreferences.getInstance();
-       final token = prefs.getString('token');
-       if (token == null) {
-        return "Chưa đăng nhập. Không có token.";
-      }
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return "Chưa đăng nhập. Không có token.";
+
       final response = await http.put(
         url,
         headers: {
           "Content-Type": "application/json",
-           "Authorization": "Bearer $token",
-          },
+          "Authorization": "Bearer $token",
+        },
         body: jsonEncode({
           "departmentName": name,
           "description": description,
+          "topic": topic, // thêm topic
         }),
       );
 
@@ -96,22 +100,21 @@ class DepartmentService {
     }
   }
 
-  // Xoá phòng ban
+  // Xoá tình huống
   static Future<String> deleteDepartment(String id) async {
     try {
       final url = Uri.parse('$baseUrl/auth/api_deleteDepartment/$id');
       final prefs = await SharedPreferences.getInstance();
-       final token = prefs.getString('token');
-       if (token == null) {
-        return "Chưa đăng nhập. Không có token.";
-      }
+      final token = prefs.getString('token');
+      if (token == null) return "Chưa đăng nhập. Không có token.";
+
       final response = await http.delete(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token', 
-      },
-    );
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) return "success";
       final body = jsonDecode(response.body);

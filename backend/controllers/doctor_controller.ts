@@ -18,7 +18,7 @@ export const addDoctors = async (req: Request, res: Response) => {
       departmentName,
       specialization,
       avatar,
-      
+
     });
 
     await newDoctors.save();
@@ -30,7 +30,7 @@ export const addDoctors = async (req: Request, res: Response) => {
   }
 };
 
-// Lấy danh sách 
+// Lấy danh sách
 export const getDoctors = async (req: Request, res: Response) => {
   try {
     const doctors = await Doctor.find();
@@ -57,7 +57,7 @@ export const getDoctors = async (req: Request, res: Response) => {
   }
 };
 
-// Cập nhật 
+// Cập nhật
 export const updateDoctor = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

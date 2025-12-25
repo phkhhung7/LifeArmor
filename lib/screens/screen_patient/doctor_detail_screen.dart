@@ -91,7 +91,7 @@ class DoctorDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12)),
                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 80),
                   ),
-                  child: Text("Đặt lịch khám ngay",
+                  child: Text("Đặt lịch trò chuyện ngay",
                       style: TextStyle(fontSize: 16)),
                 ),
               ],

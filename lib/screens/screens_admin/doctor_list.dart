@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/api_doctors.dart';
-import 'AddDoctorScreen.dart';
 
 class DoctorListScreen extends StatefulWidget {
   @override
@@ -8,23 +7,22 @@ class DoctorListScreen extends StatefulWidget {
 }
 
 class _DoctorListScreenState extends State<DoctorListScreen> {
-  List<Map<String, dynamic>> doctors = [];
+  List<Map<String, dynamic>> managers = [];
 
   @override
   void initState() {
     super.initState();
-    fetchDoctors();
+    fetchManagers();
   }
 
-  Future<void> fetchDoctors() async {
+  Future<void> fetchManagers() async {
     try {
-      final data = await DoctorService.getDoctors();
+      final data = await DoctorService.getDoctors(); // dùng cùng API, chỉ đổi tên biến
       setState(() {
-        print(data);
-        doctors = data;
+        managers = data;
       });
     } catch (e) {
-      print('Lỗi khi lấy bác sĩ: $e');
+      print('Lỗi khi lấy danh sách: $e');
     }
   }
 
@@ -32,38 +30,47 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Danh sách bác sĩ"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            tooltip: 'Thêm bác sĩ',
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddDoctorScreen()),
-              );
-              if (result == true) fetchDoctors();
-            },
-          )
-        ],
+        title: Text("Danh sách tiến sỹ / người quản lý tình huống"),
+        backgroundColor: Colors.teal,
       ),
-      body: doctors.isEmpty
-          ? Center(child: Text('Chưa có bác sĩ nào'))
+      body: managers.isEmpty
+          ? Center(child: Text('Chưa có người quản lý nào'))
           : ListView.builder(
-              itemCount: doctors.length,
-              itemBuilder: (context, index) {
-                final doctor = doctors[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: Icon(Icons.person, size: 40),
-                    title: Text(doctor['doctorName'] ?? 'Không rõ tên'),
-                    subtitle: Text(
-                        'Email: ${doctor['email'] ?? 'Chưa có'}\nPhòng ban: ${doctor['departmentName'] ?? 'Không rõ'}'),
-                  ),
-                );
-              },
+        itemCount: managers.length,
+        itemBuilder: (context, index) {
+          final manager = managers[index];
+          return Card(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.teal[100],
+                child: Icon(Icons.person, color: Colors.teal[700]),
+              ),
+              title: Text(
+                manager['doctorName'] ?? 'Không rõ tên',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Email: ${manager['email'] ?? 'Chưa có'}\nPhòng ban: ${manager['departmentName'] ?? 'Không rõ'}',
+              ),
+              trailing: PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'editRole') {
+                    // Thêm chỉnh role hoặc thông tin
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                      value: 'editRole', child: Text('Chỉnh role')),
+                ],
+              ),
             ),
+          );
+        },
+      ),
     );
   }
 }

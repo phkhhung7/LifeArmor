@@ -55,11 +55,13 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final user = data['user'];
 
         // Lưu token vào SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setString('email', email);
+        await prefs.setString('user', jsonEncode(user));
 
         // Trả về thông tin token và role
         return {
@@ -272,31 +274,16 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>?> getCurrentUser() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userJson = prefs.getString('user');
-      if (userJson == null) {
-        print("Không tìm thấy dữ liệu người dùng trong SharedPreferences.");
-        return null;
-      }
-      final userMap = jsonDecode(userJson);
-      final id = userMap['_id']?.toString();
-      if (id == null) {
-        print("Không tìm thấy ID người dùng trong dữ liệu.");
-        return null;
-      }
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
 
-      final userData = await getUserInfor(id);
-      if (userData.isNotEmpty) {
-        return userData.first;
-      }
-      return null;
-    } catch (e) {
-      print("Lỗi khi lấy thông tin người dùng hiện tại: $e");
+    if (userJson == null) {
+      print("Không có user trong prefs");
       return null;
     }
-  }
 
+    return jsonDecode(userJson);
+  }
 
 // mở, khóa tài khoản
   static Future<bool> toggleUserStatus(String id, String newStatus) async {

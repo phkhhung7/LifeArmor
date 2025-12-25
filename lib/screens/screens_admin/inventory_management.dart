@@ -1,37 +1,37 @@
 import 'package:flutter/material.dart';
 
-class MedicineInventory extends StatefulWidget {
+class SituationInventory extends StatefulWidget {
   @override
-  _MedicineInventoryState createState() => _MedicineInventoryState();
+  _SituationInventoryState createState() => _SituationInventoryState();
 }
 
-class _MedicineInventoryState extends State<MedicineInventory> {
-  List<Map<String, String>> medicineList = [
+class _SituationInventoryState extends State<SituationInventory> {
+  List<Map<String, String>> situationList = [
     {
-      'name': 'Paracetamol',
-      'quantity': '200',
-      'unit': 'viên',
-      'expiry': '12/2025',
+      'name': 'Xử lý lừa đảo trực tuyến',
+      'level': 'Cao',
+      'type': 'An ninh số',
+      'note': 'Cần đào tạo kỹ năng nhận diện',
     },
     {
-      'name': 'Amoxicillin',
-      'quantity': '150',
-      'unit': 'viên',
-      'expiry': '08/2024',
+      'name': 'Xin nghỉ phép khéo léo',
+      'level': 'Trung bình',
+      'type': 'Giao tiếp công sở',
+      'note': 'Tình huống thường gặp',
     },
   ];
 
-  void _addMedicine() {
-    // TODO: Hiển thị form dialog hoặc điều hướng đến màn hình thêm thuốc
+  void _addSituation() {
+    // TODO: Hiển thị form dialog hoặc điều hướng đến màn hình thêm tình huống
   }
 
-  void _editMedicine(int index) {
-    // TODO: Hiển thị form dialog hoặc điều hướng đến màn hình sửa thuốc
+  void _editSituation(int index) {
+    // TODO: Hiển thị form dialog hoặc điều hướng đến màn hình sửa tình huống
   }
 
-  void _deleteMedicine(int index) {
+  void _deleteSituation(int index) {
     setState(() {
-      medicineList.removeAt(index);
+      situationList.removeAt(index);
     });
   }
 
@@ -39,35 +39,36 @@ class _MedicineInventoryState extends State<MedicineInventory> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quản lý thuốc & kho'),
+        title: Text('Quản lý tình huống & tài nguyên'),
+        backgroundColor: Colors.teal,
         actions: [
           IconButton(
             icon: Icon(Icons.add),
-            onPressed: _addMedicine,
+            onPressed: _addSituation,
           ),
         ],
       ),
       body: ListView.builder(
-        itemCount: medicineList.length,
+        itemCount: situationList.length,
         itemBuilder: (context, index) {
-          final medicine = medicineList[index];
+          final situation = situationList[index];
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
-              leading: Icon(Icons.medical_services, color: Colors.green),
-              title: Text(medicine['name'] ?? ''),
+              leading: Icon(Icons.warning_amber_outlined, color: Colors.teal),
+              title: Text(situation['name'] ?? ''),
               subtitle: Text(
-                  'Số lượng: ${medicine['quantity']} ${medicine['unit']} | Hạn dùng: ${medicine['expiry']}'),
+                  'Mức độ: ${situation['level']} | Loại: ${situation['type']}\nGhi chú: ${situation['note']}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => _editMedicine(index),
+                    onPressed: () => _editSituation(index),
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteMedicine(index),
+                    onPressed: () => _deleteSituation(index),
                   ),
                 ],
               ),

@@ -1,39 +1,40 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../services/api_doctors.dart';
-import '../../services/api_department.dart';
+// import API của staff/user app
+import '../../services/api_doctors.dart'; // có thể đổi tên service thành api_user.dart
+import '../../services/api_department.dart'; // dùng cho danh sách "tình huống"
 
-class AddDoctorScreen extends StatefulWidget {
+class AddUserScreen extends StatefulWidget {
   @override
-  _AddDoctorScreenState createState() => _AddDoctorScreenState();
+  _AddUserScreenState createState() => _AddUserScreenState();
 }
 
-class _AddDoctorScreenState extends State<AddDoctorScreen> {
+class _AddUserScreenState extends State<AddUserScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController specializationController = TextEditingController();
 
-  List<Map<String, dynamic>> departments = [];
-  String? selectedDepartmentId;
+  List<Map<String, dynamic>> situations = [];
+  String? selectedSituationId;
+  String role = 'Tiến sỹ';
   File? _image;
 
   @override
   void initState() {
     super.initState();
-    fetchDepartments();
+    fetchSituations();
   }
 
-  Future<void> fetchDepartments() async {
+  Future<void> fetchSituations() async {
     try {
-      final data = await DepartmentService.getDepartments();
+      final data = await DepartmentService.getDepartments(); // đổi thành lấy danh sách tình huống
       setState(() {
-        departments = data;
+        situations = data;
       });
     } catch (e) {
-      print('Lỗi khi lấy phòng ban: $e');
+      print('Lỗi khi lấy danh sách tình huống: $e');
     }
   }
 
@@ -46,29 +47,28 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
     }
   }
 
-  Future<void> saveDoctor() async {
-    final doctorName = nameController.text.trim();
+  Future<void> saveUser() async {
+    final userName = nameController.text.trim();
     final email = emailController.text.trim();
     final phone = phoneController.text.trim();
     final address = addressController.text.trim();
-    final specialization = specializationController.text.trim();
 
-    if (doctorName.isEmpty || selectedDepartmentId == null) {
+    if (userName.isEmpty || selectedSituationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Vui lòng nhập tên và chọn phòng ban")),
+        SnackBar(content: Text("Vui lòng nhập tên và chọn tình huống xử lý")),
       );
       return;
     }
 
     final avatar = _image?.path ?? "";
 
-    final result = await DoctorService.addDoctor(
-      doctorName,
+    final result = await DoctorService.addDoctor( // đổi API thành addUser
+      userName,
       email,
       phone,
       address,
-      selectedDepartmentId!,
-      specialization,
+      selectedSituationId!,
+      role,
       avatar,
     );
 
@@ -85,7 +85,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Thêm bác sĩ')),
+      appBar: AppBar(title: Text('Thêm người dùng / tiến sỹ')),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -94,18 +94,18 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               onTap: pickImage,
               child: _image == null
                   ? CircleAvatar(
-                      radius: 40,
-                      child: Icon(Icons.camera_alt, size: 30),
-                    )
+                radius: 40,
+                child: Icon(Icons.camera_alt, size: 30),
+              )
                   : CircleAvatar(
-                      radius: 40,
-                      backgroundImage: FileImage(_image!),
-                    ),
+                radius: 40,
+                backgroundImage: FileImage(_image!),
+              ),
             ),
             SizedBox(height: 20),
             TextField(
               controller: nameController,
-              decoration: InputDecoration(labelText: 'Tên bác sĩ'),
+              decoration: InputDecoration(labelText: 'Tên người dùng'),
             ),
             TextField(
               controller: emailController,
@@ -119,30 +119,40 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               controller: addressController,
               decoration: InputDecoration(labelText: 'Địa chỉ'),
             ),
-            TextField(
-              controller: specializationController,
-              decoration: InputDecoration(labelText: 'Chuyên khoa'),
+            SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'Role'),
+              value: role,
+              items: ['Tiến sỹ', 'Người xử lý tình huống', 'Nhân viên hỗ trợ']
+                  .map((r) => DropdownMenuItem(
+                value: r,
+                child: Text(r),
+              ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => role = value);
+              },
             ),
             SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(labelText: 'Phòng ban'),
-              value: selectedDepartmentId,
-              items: departments.map((dept) {
-                final id = dept['id']?.toString() ?? '';
+              decoration: InputDecoration(labelText: 'Tình huống xử lý'),
+              value: selectedSituationId,
+              items: situations.map((s) {
+                final id = s['id']?.toString() ?? '';
                 return DropdownMenuItem<String>(
                   value: id,
-                  child: Text(dept['departmentName']?.toString()??'Không rõ tên phòng ban'),
+                  child: Text(s['departmentName']?.toString() ?? 'Không rõ tên'),
                 );
               }).toList(),
               onChanged: (value) {
                 setState(() {
-                  selectedDepartmentId = value;
+                  selectedSituationId = value;
                 });
               },
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: saveDoctor,
+              onPressed: saveUser,
               child: Text('Lưu'),
             )
           ],

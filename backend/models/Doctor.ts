@@ -7,7 +7,7 @@ export interface IDoctor extends Document {
   email?: string;
   phone?: string;
   address?: string;
-  departmentName: mongoose.Types.ObjectId; 
+  departmentName: mongoose.Types.ObjectId;
   specialization?: string;
   avatar?: string;
 }

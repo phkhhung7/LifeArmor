@@ -7,13 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'doctors_screen.dart';
-import 'faq_screen.dart';
-import 'medical_facilities_screen.dart';
-import 'specialties_screen.dart';
 import 'booking_screen.dart';
 import 'profile_screen.dart';
 import 'discussion_screen.dart';
-import 'diagnosis_result_screen.dart';
 import '../screen_doctor/doctor_home_screen.dart';
 import '../screens_admin/home.dart';
 import 'package:go_router/go_router.dart';
@@ -126,9 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return DiscussionScreen();
       case 3:
-        return BookingScreen();
-      case 4:
-        return DiagnosisResultScreen();
+        return AIChatScreen();
       default:
         return _buildHomeContent();
     }
@@ -138,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('HappyH', style: TextStyle(color: Colors.white)),
+        title: Text('Life Armor', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.teal,
         leading: Builder(
           builder: (context) => IconButton(
@@ -192,23 +186,19 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Trang chủ',
+            label: 'Home'
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Thông tin',
+            label: 'Profile'
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat),
-            label: 'Thảo luận',
+            label: 'Tình huống'
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: 'Đặt lịch',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description),
-            label: 'Kết quả',
+            label: 'Chat'
           ),
         ],
         currentIndex: _selectedIndex,
@@ -238,8 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 20),
             _buildBookingCard(),
             SizedBox(height: 20),
-            _buildDiagnosisCard(),
-            SizedBox(height: 20),
             _buildDoctorSection(),
             SizedBox(height: 20),
             _buildServiceSection(),
@@ -257,35 +245,72 @@ class _HomeScreenState extends State<HomeScreen> {
       'assets/banner3.jpg',
     ];
 
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 200,
-        autoPlay: true,
-        enlargeCenterPage: true,
-        viewportFraction: 0.9,
-      ),
-      items: images.map((imgPath) {
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: 5.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: AssetImage(imgPath),
-              fit: BoxFit.cover,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Giao tiếp tốt, ứng xử hay',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.teal[800],
           ),
-        );
-      }).toList(),
+        ),
+        SizedBox(height: 12),
+        CarouselSlider(
+          options: CarouselOptions(
+            height: 200,
+            autoPlay: true,
+            enlargeCenterPage: true,
+            viewportFraction: 0.9,
+          ),
+          items: images.map((imgPath) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: 5.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: Offset(0, 4),
+                  )
+                ],
+                image: DecorationImage(
+                  image: AssetImage(imgPath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
   Widget _buildProfileCard() {
+    // Nếu CHƯA đăng nhập
+    if (_user == null) {
+      return Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Vui lòng đăng nhập để xem hồ sơ cá nhân',
+            style: TextStyle(color: Colors.grey[700]),
+          ),
+        ),
+      );
+    }
+
+    // Nếu ĐÃ đăng nhập
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 0),
+      margin: const EdgeInsets.symmetric(horizontal: 0),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -297,82 +322,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.teal[800],
               ),
             ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.teal,
-                  child: Text(
-                    _user?['name']?.substring(0, 1) ?? 'U',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _user?['name'] ?? '',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Bệnh nhân',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ],
+            const SizedBox(height: 12),
+
+            // ✅ DÒNG DUY NHẤT CẦN HIỂN THỊ
+            Text(
+              'Chào mừng, ${_user!['name'] ?? 'Người dùng'} !',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            SizedBox(height: 10),
+
+            const SizedBox(height: 12),
+
             ElevatedButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                final userJson = prefs.getString('user');
-
-                if (userJson == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text("Không tìm thấy người dùng đã đăng nhập")),
-                  );
-                  return;
-                }
-
-                final userMap = jsonDecode(userJson);
-                final String id = userMap['_id'] ?? '';
-
-                try {
-                  final userList = await ApiService.getUserInfor(id);
-                  final userData = userList.isNotEmpty
-                      ? userList.first
-                      : {
-                          'name': '',
-                          'email': '',
-                          'phone': '',
-                          'gender': '',
-                          'age': '',
-                          'address': '',
-                        };
-
-                  if (!mounted) return;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(user: userData),
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Lỗi khi tải thông tin: $e")),
-                  );
-                }
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileScreen(user: _user!),
+                  ),
+                );
               },
-              child:
-                  Text('Xem chi tiết', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
+              ),
+              child: const Text(
+                'Xem chi tiết',
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -381,41 +358,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
   Widget _buildBookingCard() {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 0),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => BookingScreen()),
-          );
+          setState(() {
+            _selectedIndex = 3; // Chuyển sang tab Chat
+          });
         },
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: Colors.teal, size: 30),
+              Icon(Icons.chat_bubble, color: Colors.teal, size: 30),
               SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Đặt Lịch Hẹn',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal[800],
-                      ),
-                    ),
+                    Text('Chat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal[800])),
                     SizedBox(height: 5),
-                    Text(
-                      'Lên lịch khám với bác sĩ của bạn',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
+                    Text('Chat with AI', style: TextStyle(color: Colors.grey[700], fontSize: 14)),
                   ],
                 ),
               ),
@@ -427,67 +393,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDiagnosisCard() {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 0),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DiagnosisResultScreen()),
-          );
-        },
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(Icons.description, color: Colors.teal, size: 30),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Xem Kết Quả Chẩn Đoán',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal[800],
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Kiểm tra kết quả khám bệnh của bạn',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_ios, color: Colors.teal),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildDoctorSection() {
     final List<Map<String, String>> doctors = [
       {
-        'name': 'GS. Lê Đăng Quân',
-        'specialty': 'Tim mạch',
+        'name': 'TS.Lê Đăng Quân',
+        'specialty': 'Mentor',
         'image': 'assets/doctor1.jpg'
       },
       {
-        'name': 'TS. Nguyễn Thị Thanh Nhàn',
-        'specialty': 'Nhi khoa',
+        'name': 'TS.Nguyễn Thị Thanh Nhàn',
+        'specialty': 'Mentor',
         'image': 'assets/doctor2.jpg'
       },
       {
-        'name': 'TTƯT. Tú Khắc',
-        'specialty': 'Thần kinh',
+        'name': 'Tú Khắc',
+        'specialty': 'Mentor',
         'image': 'assets/doctor3.jpg'
       },
     ];
@@ -500,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Bác sĩ nổi bật',
+                'Nhà tâm lý nổi bật ',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               TextButton(
@@ -518,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(height: 10),
         CarouselSlider(
           options: CarouselOptions(
-            height: 220,
+            height: 350,
             autoPlay: true,
             enlargeCenterPage: true,
             viewportFraction: 0.7,
@@ -529,32 +450,40 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ClipRRect(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.asset(
-                      doctor['image']!,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+                  Expanded( // 🔥 quan trọng
+                    child: ClipRRect(
+                      borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                      child: Image.asset(
+                        doctor['image']!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       children: [
                         Text(
                           doctor['name']!,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           doctor['specialty']!,
-                          style: TextStyle(color: Colors.teal),
+                          style: const TextStyle(color: Colors.teal),
                           textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -582,10 +511,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          _buildDrawerItem(context, 'Chuyên khoa', SpecialtiesScreen()),
-          _buildDrawerItem(context, 'Cơ sở y tế', MedicalFacilitiesScreen()),
-          _buildDrawerItem(context, 'Bác sĩ', DoctorsScreen()),
-          _buildDrawerItem(context, 'Hỏi đáp', FAQScreen()),
+          _buildDrawerItem(context, 'Profile', ProfileScreen(user: _user ?? {})),
+          _buildDrawerItem(context, 'Tình huống', DiscussionScreen()),
+          _buildDrawerItem(context, 'Tien sy', DoctorsScreen()),
+          _buildDrawerItem(context, 'AI', AIChatScreen()),
+          _buildDrawerItem(context, 'Logout', LoginScreen()),
         ],
       ),
     );
@@ -605,20 +535,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildServiceSection() {
-    final List<Map<String, String>> services = [
+    final List<Map<String, dynamic>> services = [
       {
-        'title': 'Khám tổng quát',
-        'desc': 'Kiểm tra sức khỏe toàn diện',
-        'image': 'assets/khamtongquat.jpg'
+        'title': 'Xin nghỉ phép',
+        'desc': 'Cách nói chuyện với sếp để được đồng ý',
+        'icon': Icons.event_available,
+        'color': Colors.teal,
       },
       {
-        'title': 'Xét nghiệm máu',
-        'desc': 'Kiểm tra chỉ số đường huyết',
-        'image': 'assets/xetnghiemmau.jpg'
+        'title': 'Giải quyết xung đột',
+        'desc': 'Kỹ năng xử lý mâu thuẫn hiệu quả',
+        'icon': Icons.group_work,
+        'color': Colors.orange,
+      },
+      {
+        'title': 'Ứng xử online',
+        'desc': 'Giao tiếp lịch sự và tránh lừa đảo mạng',
+        'icon': Icons.smart_display,
+        'color': Colors.blue,
       },
     ];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 0),
@@ -626,7 +565,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Dịch vụ nổi bật',
+                'Tình huống nổi bật',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               TextButton(
@@ -645,20 +584,23 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    service['image']!,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
+                leading: CircleAvatar(
+                  backgroundColor: service['color'],
+                  child: Icon(
+                    service['icon'],
+                    color: Colors.white,
                   ),
                 ),
                 title: Text(
-                  service['title']!,
+                  service['title'],
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(service['desc']!),
+                subtitle: Text(service['desc']),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    color: Colors.teal, size: 16),
+                onTap: () {
+                  // Xử lý khi nhấn vào tình huống
+                },
               ),
             );
           }).toList(),
@@ -666,6 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+
 
   Widget _buildLoginDialog() {
     final _formKey = GlobalKey<FormState>();
@@ -686,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Image.asset('assets/logo.png', height: 80),
                   SizedBox(height: 10),
                   Text(
-                    "Chăm sóc sức khỏe toàn diện - Vì bạn xứng đáng!",
+                    "Mỗi ngày một niềm vui mới",
                     style: TextStyle(
                       fontSize: 14,
                       fontStyle: FontStyle.italic,

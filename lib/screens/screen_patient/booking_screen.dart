@@ -1,284 +1,129 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import '../../services/api_appointment.dart';
-import '../../services/api_department.dart';
-import '../../services/api_doctors.dart';
+import 'package:http/http.dart' as http;
 
-class BookingScreen extends StatefulWidget {
+class AIChatScreen extends StatefulWidget {
   @override
-  _BookingScreenState createState() => _BookingScreenState();
+  _AIChatScreenState createState() => _AIChatScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
-  List<Map<String, dynamic>> departments = [];
-  List<Map<String, dynamic>> doctors = [];
-  String? selectedDepartmentId;
-  String? selectedDoctorId;
-  final _formKey = GlobalKey<FormState>();
-  String patientName = '';
-  String phone = '';
-  String reason = '';
-  DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+class _AIChatScreenState extends State<AIChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Map<String, String>> messages = [];
 
-  @override
-  void initState() {
-    super.initState();
-    fetchDepartments();
-  }
+  // Hàm gọi backend GPT
+  Future<String> sendToGPT(String userMessage) async {
+    // Thay URL nếu chạy trên device thật hoặc server
+    final url = Uri.parse('http://10.0.2.2:5000/chat');
 
-  Future<void> fetchDepartments() async {
-    try {
-      final data = await DepartmentService.getDepartments();
-      setState(() {
-        departments = data;
-      });
-    } catch (e) {
-      showSnackbar('Lỗi khi lấy danh sách phòng ban: $e');
-    }
-  }
-
-  Future<void> fetchDoctors(String departmentId) async {
-    try {
-      final data = await DoctorService.getDoctors();
-      print('Danh sách bác sĩ gốc: $data');
-      // Khai báo biến filteredDoctors
-      final filteredDoctors = data
-          .where((doctor) => doctor['departmentId'] == departmentId)
-          .toList();
-      print(
-          'Danh sách bác sĩ sau khi lọc cho departmentId $departmentId: $filteredDoctors');
-      setState(() {
-        doctors = filteredDoctors; // Sử dụng filteredDoctors đã khai báo
-        selectedDoctorId = null;
-        if (doctors.isEmpty) {
-          showSnackbar('Không có bác sĩ trong phòng ban này');
-        }
-      });
-    } catch (e) {
-      showSnackbar('Lỗi khi lấy danh sách bác sĩ: $e');
-    }
-  }
-
-  void _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 30)),
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"text": userMessage}),
     );
-    if (picked != null) setState(() => selectedDate = picked);
-  }
 
-  void _selectTime() async {
-    final picked =
-        await showTimePicker(context: context, initialTime: TimeOfDay.now());
-    if (picked != null) setState(() => selectedTime = picked);
-  }
-
-  void _submitBooking() async {
-    if (_formKey.currentState!.validate() &&
-        selectedDate != null &&
-        selectedTime != null &&
-        selectedDepartmentId != null &&
-        selectedDoctorId != null) {
-      final date =
-          '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
-      final time = selectedTime!.format(context);
-
-      print('selectedDepartmentId: $selectedDepartmentId');
-      print('selectedDoctorId: $selectedDoctorId');
-      print('date: $date');
-      print('time: $time');
-
-      try {
-        final selectedDepartment = departments.firstWhere(
-       (dept) => dept['id'] == selectedDepartmentId,
-       orElse: () => {},
-       );
-        final selectedDoctor = doctors.firstWhere(
-        (doc) => doc['id'] == selectedDoctorId,
-        orElse: () => {},
-        );
-        final departmentName = selectedDepartment['departmentName'] ?? '';
-        final doctorName = selectedDoctor['doctorName'] ?? '';
-        final result = await AddAppointments.addAppointment(
-          patientName,
-          phone,
-          reason,
-          date,
-          time,
-          departmentName,
-          doctorName,
-        );
-
-        if (result == "success") {
-          if (!mounted) return;
-          showSnackbar("Đặt lịch thành công");
-          Future.delayed(Duration(seconds: 1), () {
-            if (!mounted) return;
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => HomeScreen()),
-            );
-          });
-        } else {
-          showSnackbar(result);
-        }
-      } catch (e) {
-        showSnackbar("Lỗi hệ thống: $e");
-      }
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // Trả về text của GPT
+      return data['choices'][0]['message']['content'];
     } else {
-      showSnackbar("Vui lòng nhập đầy đủ thông tin");
+      throw Exception('Backend GPT error: ${response.body}');
     }
   }
 
-  void showSnackbar(String message) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.teal,
-      ),
-    );
+  // Hàm gửi tin nhắn
+  void _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      messages.add({'role': 'user', 'message': text});
+    });
+
+    _controller.clear();
+
+    try {
+      // Hiển thị "GPT đang trả lời..."
+      setState(() {
+        messages.add({'role': 'ai', 'message': 'GPT đang trả lời...'});
+      });
+
+      final reply = await sendToGPT(text);
+
+      setState(() {
+        messages.removeLast(); // xóa "đang trả lời"
+        messages.add({'role': 'ai', 'message': reply});
+      });
+    } catch (e) {
+      setState(() {
+        messages.removeLast();
+        messages.add({'role': 'ai', 'message': '❌ Lỗi kết nối GPT'});
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Đặt lịch khám')),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Text(
-                'Nhập thông tin để đặt lịch khám',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-
-              // Họ tên bệnh nhân
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Họ và tên bệnh nhân',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Vui lòng nhập họ tên' : null,
-                onChanged: (value) => patientName = value,
-              ),
-              SizedBox(height: 16),
-              // phonephone
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Số điện thoại',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Vui lòng nhập số điện thoại' : null,
-                onChanged: (value) => phone = value,
-              ),
-              SizedBox(height: 16),
-
-              // Lý do khám
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Lý do khám bệnh',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-                validator: (value) =>
-                    value!.isEmpty ? 'Vui lòng nhập lý do' : null,
-                onChanged: (value) => reason = value,
-              ),
-              SizedBox(height: 16),
-              // Phòng ban
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Chọn phòng ban',
-                  border: OutlineInputBorder(),
-                ),
-                value: selectedDepartmentId,
-                items: departments.map((dept) {
-                  return DropdownMenuItem<String>(
-                    value: dept['id'],
+      appBar: AppBar(
+        title: Text('AI Chat'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(12),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final msg = messages[index];
+                final isUser = msg['role'] == 'user';
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.teal : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Text(
-                        dept['departmentName'] ?? 'Không rõ tên phòng ban'),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedDepartmentId = value;
-                    doctors = []; // Reset danh sách bác sĩ
-                    if (value != null) {
-                      fetchDoctors(
-                          value); // Lấy danh sách bác sĩ theo phòng ban
-                    }
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Vui lòng chọn phòng ban' : null,
-              ),
-              SizedBox(height: 16),
-
-// Bác sĩ
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Chọn bác sĩ',
-                  border: OutlineInputBorder(),
-                ),
-                value: selectedDoctorId,
-                items: doctors.map((doctor) {
-                  return DropdownMenuItem<String>(
-                    value: doctor['id'],
-                    child: Text(doctor['doctorName'] ?? 'Không rõ tên bác sĩ'),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedDoctorId = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Vui lòng chọn bác sĩ' : null,
-              ),
-              SizedBox(height: 16),
-
-              // Ngày khám
-              ListTile(
-                title: Text(selectedDate == null
-                    ? 'Chọn ngày khám'
-                    : 'Ngày khám: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'),
-                trailing: Icon(Icons.calendar_today),
-                onTap: _selectDate,
-              ),
-              Divider(),
-
-              // Giờ khám
-              ListTile(
-                title: Text(selectedTime == null
-                    ? 'Chọn giờ khám'
-                    : 'Giờ khám: ${selectedTime!.format(context)}'),
-                trailing: Icon(Icons.access_time),
-                onTap: _selectTime,
-              ),
-              Divider(),
-
-              SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _submitBooking,
-                icon: Icon(Icons.check),
-                label: Text('Xác nhận đặt lịch'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-              ),
-            ],
+                      msg['message']!,
+                      style: TextStyle(
+                        color: isUser ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+          Divider(height: 1),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Nhập tin nhắn...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.send, color: Colors.teal),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

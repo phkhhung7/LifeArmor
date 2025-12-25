@@ -4,7 +4,6 @@ import 'screens/screen_authencication/login_screen.dart';
 import 'screens/screen_patient/home_screen.dart';
 import 'screens/screen_patient/thank_screen.dart';
 import 'screens/screens_admin/home.dart';
-import 'screens/screen_staff/home.dart';
 import 'screens/screen_doctor/doctor_home_screen.dart';
 import 'screens/screen_doctor/appointment_page.dart';
 import 'screens/screen_doctor/patient_management.dart';
@@ -40,10 +39,6 @@ final GoRouter router = GoRouter(
       builder: (context, state) => AdminDashboard(),
     ),
     GoRoute(
-      path: '/staff',
-      builder: (context, state) => StaffDashboard(),
-    ),
-    GoRoute(
       path: '/doctor',
       builder: (context, state) => DoctorDashboard(),
     ),
@@ -73,7 +68,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/home/booking',
-      builder: (context, state) => BookingScreen(),
+      builder: (context, state) => AIChatScreen(),
     ),
     GoRoute(
       path: '/doctor/create-medical-record',

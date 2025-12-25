@@ -2,7 +2,7 @@ import { RequestHandler, Router } from 'express';
 import multer from 'multer';
 import { register, createUserByAdmin,login,updateUserInfor,getUserInfor,verifyOtp, changePassWord } from '../controllers/auth.controller';
 import { verifyToken, isAdmin,  } from '../middleware/auth';
-import { addDepartments, 
+import { addDepartments,
     getDepartments,
     updateDepartment,
     deleteDepartment, } from '../controllers/departments_cotroller';
@@ -33,8 +33,8 @@ router.get("/api_getUserInfor/:id", verifyToken,getUserInfor);
 
 // routers of Departments
 router.post('/api_addDepartment',verifyToken, addDepartments);
-router.get("/api_departmentList",verifyToken, getDepartments);                
-router.put("/api_updatDepartment/:id",verifyToken, updateDepartment);           
+router.get("/api_departmentList",verifyToken, getDepartments);
+router.put("/api_updatDepartment/:id",verifyToken, updateDepartment);
 router.delete("/api_deleteDepartment/:id",verifyToken, deleteDepartment);
 
 // routers of doctor
@@ -45,6 +45,8 @@ router.delete("/api_deleteDepartment/:id",verifyToken, deleteDepartment);
 
  //AI router python
  router.post("/api_predict",verifyToken, predictDiabetes);
+
+
 
  // medical record infor
   router.post("/api_addMedicalRecord", verifyToken,createMedicalRecord);

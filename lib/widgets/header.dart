@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../screens/screen_authencication/login_screen.dart';
 import '../screens/screen_authencication/register_screen.dart';
+import '../screens/screen_patient/discussion_screen.dart';
 import '../screens/screen_patient/doctors_screen.dart';
-import '../screens/screen_patient/faq_screen.dart';
 import '../screens/screen_patient/medical_facilities_screen.dart';
+import '../screens/screen_patient/profile_screen.dart';
 import '../screens/screen_patient/specialties_screen.dart';
 import '../screens/screen_patient/booking_screen.dart';
 
@@ -45,14 +46,16 @@ class _HeaderState extends State<Header> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildMenuItem(context, 'Chuyên khoa', SpecialtiesScreen()),
-          _buildMenuItem(context, 'Cơ sở y tế', MedicalFacilitiesScreen()),
-          _buildMenuItem(context, 'Bác sĩ', DoctorsScreen()),
-          _buildMenuItem(context, 'Hỏi đáp', FAQScreen()),
+          _buildMenuItem(context, 'Profile', ProfileScreen(user: {})),
+          _buildMenuItem(context, 'Tình huống', DiscussionScreen()),
+          _buildMenuItem(context, 'Tiến sỹ', DoctorsScreen()),
+          _buildMenuItem(context, 'AI', AIChatScreen()),
+          _buildMenuItem(context, 'Logout', LoginScreen()),
         ],
       ),
     );
   }
+
 
   /// **Hover Menu đẹp hơn trên Web**
   Widget _buildMenuItem(BuildContext context, String title, Widget screen) {
@@ -146,7 +149,7 @@ class _HeaderState extends State<Header> {
         SizedBox(width: 10),
         ElevatedButton(
           onPressed: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => BookingScreen())),
+              MaterialPageRoute(builder: (context) => AIChatScreen())),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             foregroundColor: Colors.white,

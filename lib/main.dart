@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       routerConfig: router, // cấu hình go_router ở đây
       debugShowCheckedModeBanner: false,
-      title: 'Đặt lịch khám bệnh',
+      title: 'Life Armor',
       theme: ThemeData(primarySwatch: Colors.blue),
     );
   }

@@ -49,7 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       // ✅ Câu slogan tạo uy tín
                       Text(
-                        "Chăm sóc sức khỏe toàn diện - Vì bạn xứng đáng!",
+                        "Mỗi ngày một niềm vui mới",
                         style: TextStyle(
                             fontSize: 14,
                             fontStyle: FontStyle.italic,

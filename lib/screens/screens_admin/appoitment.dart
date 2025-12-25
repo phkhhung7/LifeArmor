@@ -6,34 +6,34 @@ class AppointmentListScreen extends StatefulWidget {
 }
 
 class _AppointmentListScreenState extends State<AppointmentListScreen> {
-  List<Map<String, dynamic>> appointments = [
+  List<Map<String, dynamic>> scenarios = [
     {
-      'id': 'APT001',
-      'patientName': 'Nguyễn Văn A',
-      'doctorName': 'Dr. Trần Thị B',
+      'id': 'SCN001',
+      'userName': 'Nguyễn Văn A',
+      'scenarioOwner': 'Trần Thị B',
       'date': '2025-04-22',
       'time': '09:00 AM',
-      'status': 'Đang chờ'
+      'status': 'Chưa xử lý'
     },
     {
-      'id': 'APT002',
-      'patientName': 'Lê Thị C',
-      'doctorName': 'Dr. Nguyễn Văn D',
+      'id': 'SCN002',
+      'userName': 'Lê Thị C',
+      'scenarioOwner': 'Nguyễn Văn D',
       'date': '2025-04-22',
       'time': '10:30 AM',
-      'status': 'Đã xác nhận'
+      'status': 'Đang xử lý'
     },
   ];
 
-  void confirmAppointment(int index) {
+  void markCompleted(int index) {
     setState(() {
-      appointments[index]['status'] = 'Đã xác nhận';
+      scenarios[index]['status'] = 'Đã hoàn thành';
     });
   }
 
-  void cancelAppointment(int index) {
+  void cancelScenario(int index) {
     setState(() {
-      appointments[index]['status'] = 'Đã huỷ';
+      scenarios[index]['status'] = 'Đã huỷ';
     });
   }
 
@@ -41,17 +41,17 @@ class _AppointmentListScreenState extends State<AppointmentListScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Chi tiết lịch hẹn"),
+        title: Text("Chi tiết tình huống"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Mã lịch: ${appointments[index]['id']}"),
-            Text("Bệnh nhân: ${appointments[index]['patientName']}"),
-            Text("Bác sĩ: ${appointments[index]['doctorName']}"),
-            Text("Ngày: ${appointments[index]['date']}"),
-            Text("Giờ: ${appointments[index]['time']}"),
-            Text("Trạng thái: ${appointments[index]['status']}"),
+            Text("Mã tình huống: ${scenarios[index]['id']}"),
+            Text("Người dùng: ${scenarios[index]['userName']}"),
+            Text("Người quản lý: ${scenarios[index]['scenarioOwner']}"),
+            Text("Ngày: ${scenarios[index]['date']}"),
+            Text("Giờ: ${scenarios[index]['time']}"),
+            Text("Trạng thái: ${scenarios[index]['status']}"),
           ],
         ),
         actions: [
@@ -63,12 +63,14 @@ class _AppointmentListScreenState extends State<AppointmentListScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Đã xác nhận':
+      case 'Đã hoàn thành':
         return Colors.green;
       case 'Đã huỷ':
         return Colors.red;
-      default:
+      case 'Đang xử lý':
         return Colors.orange;
+      default:
+        return Colors.blueGrey;
     }
   }
 
@@ -76,28 +78,32 @@ class _AppointmentListScreenState extends State<AppointmentListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Danh sách lịch hẹn"),
+        title: Text("Danh sách tình huống"),
+        backgroundColor: Colors.teal,
       ),
       body: ListView.builder(
-        itemCount: appointments.length,
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        itemCount: scenarios.length,
         itemBuilder: (context, index) {
-          final appointment = appointments[index];
+          final scenario = scenarios[index];
           return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            elevation: 2,
+            margin: EdgeInsets.symmetric(vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
-              leading: Icon(Icons.calendar_today, color: _statusColor(appointment['status'])),
-              title: Text('${appointment['patientName']} → ${appointment['doctorName']}'),
-              subtitle: Text('${appointment['date']} | ${appointment['time']}'),
+              leading: Icon(Icons.chat_bubble, color: _statusColor(scenario['status'])),
+              title: Text('${scenario['userName']} → ${scenario['scenarioOwner']}'),
+              subtitle: Text('${scenario['date']} | ${scenario['time']}'),
               trailing: PopupMenuButton<String>(
                 onSelected: (value) {
-                  if (value == 'confirm') confirmAppointment(index);
-                  if (value == 'cancel') cancelAppointment(index);
+                  if (value == 'complete') markCompleted(index);
+                  if (value == 'cancel') cancelScenario(index);
                   if (value == 'view') viewDetails(index);
                 },
                 itemBuilder: (_) => [
-                  if (appointment['status'] == 'Đang chờ')
-                    PopupMenuItem(value: 'confirm', child: Text('Xác nhận')),
-                  if (appointment['status'] != 'Đã huỷ')
+                  if (scenario['status'] == 'Chưa xử lý')
+                    PopupMenuItem(value: 'complete', child: Text('Hoàn thành')),
+                  if (scenario['status'] != 'Đã huỷ')
                     PopupMenuItem(value: 'cancel', child: Text('Huỷ')),
                   PopupMenuItem(value: 'view', child: Text('Xem chi tiết')),
                 ],

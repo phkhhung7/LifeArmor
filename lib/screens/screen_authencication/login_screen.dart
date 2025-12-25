@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_datlichkham/services/api_service.dart';
 import 'register_screen.dart';
-import 'forgot_password_screen.dart';
 //import '../screen_patient/home_screen.dart';
-import 'change_password_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 // import '../screen_doctor/doctor_home_screen.dart';
@@ -47,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // ✅ Câu slogan tạo uy tín
                       Text(
-                        "Chăm sóc sức khỏe toàn diện - Vì bạn xứng đáng!",
+                        "Mỗi ngày một niềm vui mới",
                         style: TextStyle(
                             fontSize: 14,
                             fontStyle: FontStyle.italic,
@@ -94,8 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                context.go('/home');
                               } else if (role == 'doctor') {
                                context.go('/doctor');
-                              } else if (role == 'staff') {
-                               context.go('/staff');
                               }
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -121,30 +117,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // ✅ Quên mật khẩu & Đổi mật khẩu
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ForgotPasswordScreen()));
-                            },
+
+                            onPressed: () {  },
                             child: Text("Quên mật khẩu?",
                                 style: TextStyle(color: Colors.blue.shade700)),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ChangePasswordScreen()));
-                            },
-                            child: Text("Đổi mật khẩu",
-                                style: TextStyle(color: Colors.blue.shade700)),
-                          ),
+
                         ],
                       ),
 
